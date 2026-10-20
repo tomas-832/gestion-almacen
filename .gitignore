@@ -25,3 +25,11 @@ replay_pid*
 
 # Configuración privada de Spring Boot
 src/main/resources/application.properties
+
+# Archivos generados por Maven
+/target/
+
+# Archivos de IDE
+/.idea/
+/.vscode/
+*.iml
