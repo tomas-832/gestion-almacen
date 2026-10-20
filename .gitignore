@@ -28,6 +28,7 @@ src/main/resources/application.properties
 
 # Archivos generados por Maven
 /target/
+HELP.md
 
 # Archivos de IDE
 /.idea/
