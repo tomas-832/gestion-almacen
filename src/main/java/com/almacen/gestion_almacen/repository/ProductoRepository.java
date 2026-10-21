@@ -1,0 +1,45 @@
+package com.almacen.gestion_almacen.repository;
+
+import java.util.List;
+
+import com.almacen.gestion_almacen.model.Producto;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+//Accede a los datos almacenados
+@Repository
+public class ProductoRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    public ProductoRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    //Consulta de productos
+    public List<Producto> encontrarProductos() {
+
+        //Consulta SQL
+        String consultaSql = """
+        SELECT codigo, nombre, precio_venta, stock_actual, stock_minimo, activo
+        FROM productos;
+        """;
+
+        //Arma los producto con el resultado de cada consulta
+        return jdbcTemplate.query(consultaSql, (resultadoConsulta, numeroFila) -> {
+            Producto producto = new Producto();
+
+            producto.setCodigo(resultadoConsulta.getString("codigo"));
+            producto.setNombre(resultadoConsulta.getString("nombre"));
+            producto.setPrecioVenta(resultadoConsulta.getBigDecimal("precio_venta"));
+            producto.setStockActual(resultadoConsulta.getInt("stock_actual"));
+            producto.setStockMinimo(resultadoConsulta.getInt("stock_minimo"));
+            producto.setActivo(resultadoConsulta.getBoolean("activo"));
+
+            return producto;
+            }
+        );
+    }
+}
+
