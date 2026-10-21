@@ -41,5 +41,18 @@ public class ProductoRepository {
             }
         );
     }
+
+    //Agregar un nuevo producto
+    public Producto registrarProducto(Producto producto){
+        //Consulta SQL
+        String consultaSql = """
+        INSERT INTO productos (codigo, nombre, precio_venta, stock_actual, stock_minimo)
+        VALUES (?, ?, ?, 0, ?);
+        """;
+
+        jdbcTemplate.update(consultaSql, producto.getNombre(), producto.getPrecioVenta(), producto.getStockActual(), producto.getStockMinimo());
+
+        return producto;
+    }
 }
 
