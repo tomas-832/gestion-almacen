@@ -50,9 +50,21 @@ public class ProductoRepository {
         VALUES (?, ?, ?, 0, ?);
         """;
 
-        jdbcTemplate.update(consultaSql, producto.getNombre(), producto.getPrecioVenta(), producto.getStockActual(), producto.getStockMinimo());
+        jdbcTemplate.update(consultaSql, producto.getCodigo(), producto.getNombre(), producto.getPrecioVenta(), producto.getStockMinimo());
 
         return producto;
+    }
+
+    //Desctivar o activar producto 
+    public void cambiarEstadoProducto(Producto producto){
+        //Consutla SQL
+        String consultaSql = """ 
+        UPDATE productos
+        SET activo = ?
+        WHERE id_producto = ?;
+        """;
+
+        jdbcTemplate.update(consultaSql, producto.getActivo(), producto.getIdProducto());
     }
 }
 

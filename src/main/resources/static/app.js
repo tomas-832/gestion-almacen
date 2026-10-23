@@ -1,126 +1,382 @@
-const secciones = {
-    productos: {
-        titulo: "Productos",
-        endpoint: "/productos"
-    },
-    compras: {
-        titulo: "Compras",
-        endpoint: "/compras"
-    },
-    ventas: {
-        titulo: "Ventas",
-        endpoint: "/ventas"
-    },
-    proveedores: {
-        titulo: "Proveedores",
-        endpoint: "/proveedores"
-    },
-    gastos: {
-        titulo: "Gastos",
-        endpoint: "/gastos"
-    }
+
+const endpoints = {
+    productos: "/productos",
+    proveedores: "/proveedores",
+    compras: "/compras",
+    ventas: "/ventas",
+    gastos: "/gastos"
 };
 
-const parametros = new URLSearchParams(window.location.search);
-const tipo = parametros.get("tipo");
-const seccion = secciones[tipo];
+const vistas = document.querySelectorAll(".vista");
+const botonesNavegacion = document.querySelectorAll("[data-seccion]");
 
-const titulo = document.getElementById("tituloSeccion");
-const mensaje = document.getElementById("mensaje");
-const tabla = document.getElementById("tablaDatos");
-const jsonDatos = document.getElementById("jsonDatos");
-const botonActualizar = document.getElementById("btnActualizar");
+let productosActuales = [];
 
-if (!seccion) {
-    window.location.replace("/");
-} else {
-    titulo.textContent = seccion.titulo;
-    document.title = seccion.titulo + " - Almacén Don José";
+function mostrarFormularioProducto() {
+    const formulario = document.getElementById("formProducto");
 
-    botonActualizar.addEventListener("click", cargarDatos);
-    cargarDatos();
+    formulario.classList.remove("oculto");
+    document.getElementById("mensajeFormulario").textContent = "";
+    document.getElementById("codigoProducto").focus();
 }
 
-async function cargarDatos() {
-    mensaje.textContent = "Consultando datos...";
-    botonActualizar.disabled = true;
+function navegar(seccion, accion = null) {
+    const vista = document.getElementById(`vista-${seccion}`);
 
-    try {
-        const respuesta = await fetch(seccion.endpoint);
+    if (!vista) return;
 
-        if (!respuesta.ok) {
-            throw new Error(`Error HTTP ${respuesta.status}`);
+    vistas.forEach(elemento => elemento.classList.remove("activa"));
+    vista.classList.add("activa");
+
+    document.querySelectorAll(".nav-item").forEach(boton => {
+        boton.classList.toggle(
+            "activo",
+            boton.dataset.seccion === seccion
+        );
+    });
+
+    if (seccion === "productos") {
+        cargarProductos();
+
+        if (accion === "nuevo") {
+            document.getElementById("formProducto").classList.remove("oculto");
+            document.getElementById("nombreProducto").focus();
+        }
+    } else if (seccion !== "inicio" && seccion !== "informes") {
+        cargarSeccion(seccion);
+    }
+}
+
+botonesNavegacion.forEach(boton => {
+    boton.addEventListener("click", () => {
+        navegar(boton.dataset.seccion, boton.dataset.accion);
+    });
+});
+
+// Productos
+
+
+document.getElementById("formProducto").addEventListener(
+    "submit",
+    async evento => {
+        evento.preventDefault();
+
+        const formulario = evento.currentTarget;
+        const mensaje = document.getElementById("mensajeFormulario");
+        const boton = formulario.querySelector('button[type="submit"]');
+
+        const codigo = document
+            .getElementById("codigoProducto")
+            .value
+            .trim()
+            .toUpperCase();
+
+        const nombre = document
+            .getElementById("nombreProducto")
+            .value
+            .trim();
+
+        const precio = Number(
+            document.getElementById("precioProducto").value
+        );
+
+        const stockMinimo = Number(
+            document.getElementById("stockMinimo").value
+        );
+
+        if (!/^PROD_[0-9]{4,}$/.test(codigo)) {
+            mensaje.textContent =
+                "El código debe tener el formato PROD_0001.";
+            return;
         }
 
-        const datos = await respuesta.json();
+        if (
+            !nombre ||
+            !Number.isFinite(precio) ||
+            precio <= 0 ||
+            !Number.isInteger(stockMinimo) ||
+            stockMinimo < 0
+        ) {
+            mensaje.textContent = "Revisá los datos ingresados.";
+            return;
+        }
 
-        mostrarDatos(datos);
+        const nuevoProducto = {
+            codigo: codigo,
+            nombre: nombre,
+            precioVenta: precio,
+            stockMinimo: stockMinimo
+        };
 
-        mensaje.textContent = Array.isArray(datos)
-            ? `${datos.length} registro(s) encontrado(s).`
-            : "Datos cargados correctamente.";
-    } catch (error) {
-        mensaje.textContent =
-            "No se pudieron cargar los datos. Verificá que el endpoint exista.";
+        boton.disabled = true;
+        mensaje.textContent = "Guardando producto...";
 
-        console.error(error);
-    } finally {
-        botonActualizar.disabled = false;
+        try {
+            const respuesta = await fetch("/productos", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(nuevoProducto)
+            });
+
+            if (!respuesta.ok) {
+                if (respuesta.status === 409) {
+                    throw new Error(
+                        "Ya existe un producto con ese código."
+                    );
+                }
+
+                if (respuesta.status === 400) {
+                    throw new Error(
+                        "Los datos enviados no son válidos."
+                    );
+                }
+
+                throw new Error(
+                    `No se pudo guardar el producto (HTTP ${respuesta.status}).`
+                );
+            }
+
+            mensaje.textContent = "Producto registrado correctamente.";
+
+            formulario.reset();
+            document.getElementById("stockMinimo").value = 5;
+            formulario.classList.add("oculto");
+
+            await cargarProductos();
+
+        } catch (error) {
+            mensaje.textContent = error.message;
+            console.error("Error al registrar producto:", error);
+        } finally {
+            boton.disabled = false;
+        }
     }
+);
+
+
+document.getElementById("btnCancelarProducto").addEventListener("click", () => {
+    document.getElementById("formProducto").classList.add("oculto");
+    document.getElementById("formProducto").reset();
+    document.getElementById("mensajeFormulario").textContent = "";
+});
+
+document.getElementById("btnActualizarProductos").addEventListener(
+    "click",
+    cargarProductos
+);
+
+function obtenerCampo(objeto, ...nombres) {
+    for (const nombre of nombres) {
+        if (objeto[nombre] !== undefined && objeto[nombre] !== null) {
+            return objeto[nombre];
+        }
+    }
+
+    return null;
 }
 
-function mostrarDatos(datos) {
-    const registros = Array.isArray(datos) ? datos : [datos];
-
-    const encabezado = tabla.querySelector("thead");
-    const cuerpo = tabla.querySelector("tbody");
-
-    encabezado.replaceChildren();
-    cuerpo.replaceChildren();
-
-    jsonDatos.textContent = JSON.stringify(datos, null, 2);
-
-    if (registros.length === 0) {
-        mensaje.textContent = "No hay registros para mostrar.";
-        return;
+function formatoPrecio(valor) {
+    if (valor === null || valor === undefined || valor === "") {
+        return "—";
     }
 
-    const columnas = [
-        ...new Set(registros.flatMap(registro =>
-            registro && typeof registro === "object"
-                ? Object.keys(registro)
-                : ["valor"]
-        ))
-    ];
-
-    const filaEncabezado = document.createElement("tr");
-
-    columnas.forEach(columna => {
-        const th = document.createElement("th");
-        th.textContent = columna;
-        filaEncabezado.appendChild(th);
+    return "$" + Number(valor).toLocaleString("es-AR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
     });
+}
 
-    encabezado.appendChild(filaEncabezado);
+async function solicitarJSON(url, opciones = {}) {
+    const respuesta = await fetch(url, opciones);
 
-    registros.forEach(registro => {
-        const fila = document.createElement("tr");
+    if (!respuesta.ok) {
+        throw new Error(`Error HTTP ${respuesta.status}`);
+    }
 
-        columnas.forEach(columna => {
-            const celda = document.createElement("td");
-            const valor = columna === "valor"
-                ? registro
-                : registro?.[columna];
+    if (respuesta.status === 204) {
+        return null;
+    }
 
-            celda.textContent =
-                valor == null ? "" :
-                typeof valor === "object" ? JSON.stringify(valor) :
-                String(valor);
+    const texto = await respuesta.text();
 
-            fila.appendChild(celda);
+    return texto ? JSON.parse(texto) : null;
+}
+
+async function cargarProductos() {
+    const mensaje = document.getElementById("mensajeProductos");
+    const cuerpo = document.querySelector("#tablaProductos tbody");
+
+    mensaje.textContent = "Consultando productos...";
+    document.getElementById("btnActualizarProductos").disabled = true;
+
+    try {
+        const datos = await solicitarJSON(endpoints.productos);
+
+        productosActuales = Array.isArray(datos) ? datos : [];
+        document.getElementById("jsonProductos").textContent =
+            JSON.stringify(datos, null, 2);
+
+        cuerpo.replaceChildren();
+
+        productosActuales.forEach(producto => {
+            const codigo = obtenerCampo(producto, "codigo", "id");
+            const nombre = obtenerCampo(producto, "nombre");
+            const precio = obtenerCampo(producto,"precioVenta","precio_venta","precio");
+            const stock = obtenerCampo(
+                producto, "stock_actual", "stockActual"
+            );
+            const minimo = obtenerCampo(
+                producto, "stock_minimo", "stockMinimo"
+            );
+
+            const fila = document.createElement("tr");
+
+            [
+                codigo,
+                nombre,
+                formatoPrecio(precio),
+                stock,
+                minimo
+            ].forEach(valor => {
+                const celda = document.createElement("td");
+                celda.textContent = valor ?? "—";
+                fila.appendChild(celda);
+            });
+
+            const stockBajo =
+                stock !== null &&
+                minimo !== null &&
+                Number(stock) < Number(minimo);
+
+            const celdaEstado = document.createElement("td");
+            const etiqueta = document.createElement("span");
+
+            etiqueta.className = stockBajo
+                ? "estado-stock stock-bajo"
+                : "estado-stock stock-normal";
+
+            etiqueta.textContent = stockBajo ? "Stock bajo" : "Normal";
+            celdaEstado.appendChild(etiqueta);
+            fila.appendChild(celdaEstado);
+
+            cuerpo.appendChild(fila);
         });
 
-        cuerpo.appendChild(fila);
-    });
+        mensaje.textContent =
+            `${productosActuales.length} producto(s) encontrado(s).`;
+
+        actualizarResumen();
+    } catch (error) {
+        mensaje.textContent =
+            "No se pudieron cargar los productos. Revisá el backend.";
+
+        console.error("Error al cargar productos:", error);
+    } finally {
+        document.getElementById("btnActualizarProductos").disabled = false;
+    }
 }
 
+function actualizarResumen() {
+    document.getElementById("totalProductos").textContent =
+        productosActuales.length;
+
+    const productosConStockBajo = productosActuales.filter(producto => {
+        const stock = obtenerCampo(producto, "stock_actual", "stockActual");
+        const minimo = obtenerCampo(producto, "stock_minimo", "stockMinimo");
+
+        return stock !== null &&
+            minimo !== null &&
+            Number(stock) < Number(minimo);
+    });
+
+    document.getElementById("totalStockBajo").textContent =
+        productosConStockBajo.length;
+}
+
+// Compras, ventas, proveedores y gastos
+
+async function cargarSeccion(seccion) {
+    const mensaje = document.getElementById(`mensaje-${seccion}`);
+    const tabla = document.getElementById(`tabla-${seccion}`);
+    const json = document.getElementById(`json-${seccion}`);
+
+    mensaje.textContent = "Consultando datos...";
+
+    try {
+        const datos = await solicitarJSON(endpoints[seccion]);
+        const registros = Array.isArray(datos)
+            ? datos
+            : datos == null ? [] : [datos];
+
+        json.textContent = JSON.stringify(datos, null, 2);
+        tabla.replaceChildren();
+
+        if (registros.length === 0) {
+            mensaje.textContent = "No hay registros para mostrar.";
+            return;
+        }
+
+        const columnas = [
+            ...new Set(registros.flatMap(registro =>
+                registro && typeof registro === "object"
+                    ? Object.keys(registro)
+                    : ["valor"]
+            ))
+        ];
+
+        const encabezado = document.createElement("thead");
+        const filaEncabezado = document.createElement("tr");
+
+        columnas.forEach(columna => {
+            const celda = document.createElement("th");
+            celda.textContent = columna;
+            filaEncabezado.appendChild(celda);
+        });
+
+        encabezado.appendChild(filaEncabezado);
+        tabla.appendChild(encabezado);
+
+        const cuerpo = document.createElement("tbody");
+
+        registros.forEach(registro => {
+            const fila = document.createElement("tr");
+
+            columnas.forEach(columna => {
+                const celda = document.createElement("td");
+                const valor = columna === "valor"
+                    ? registro
+                    : registro?.[columna];
+
+                celda.textContent = valor == null
+                    ? ""
+                    : typeof valor === "object"
+                        ? JSON.stringify(valor)
+                        : String(valor);
+
+                fila.appendChild(celda);
+            });
+
+            cuerpo.appendChild(fila);
+        });
+
+        tabla.appendChild(cuerpo);
+        mensaje.textContent = `${registros.length} registro(s) encontrado(s).`;
+    } catch (error) {
+        mensaje.textContent =
+            `No se pudieron cargar los datos de ${seccion}. Verificá que exista el endpoint.`;
+
+        console.error(`Error al cargar ${seccion}:`, error);
+    }
+}
+
+document.querySelectorAll("[data-actualizar]").forEach(boton => {
+    boton.addEventListener("click", () => {
+        cargarSeccion(boton.dataset.actualizar);
+    });
+});
+
+// Cargar la pantalla inicial y los productos para calcular los indicadores.
+navegar("inicio");
+cargarProductos();

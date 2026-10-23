@@ -6,48 +6,303 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Almacén Don José</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
 </head>
 <body>
-    <header>
-        <h1>Almacén Don José</h1>
-        <p>Sistema de gestión del almacén</p>
-    </header>
+    <div class="app">
 
-    <main>
-        <h2>Menú principal</h2>
-        <p>Seleccioná la sección que querés consultar.</p>
+        <header class="topbar">
+            <div class="marca">
+                <span class="marca-icono">⌂</span>
+                <div>
+                    <h1>Don José</h1>
+                    <p>Sistema de gestión de almacén</p>
+                </div>
+            </div>
+            <span class="estado-conexion">● Sistema de gestión</span>
+        </header>
 
-        <section class="menu">
-            <a class="tarjeta" href="seccion.html?tipo=productos">
-                <span class="icono">📦</span>
-                <h3>Productos</h3>
-                <p>Consultar productos y stock</p>
-            </a>
+        <aside class="sidebar">
+            <p class="sidebar-titulo">MENÚ PRINCIPAL</p>
 
-            <a class="tarjeta" href="seccion.html?tipo=compras">
-                <span class="icono">🛒</span>
-                <h3>Compras</h3>
-                <p>Consultar compras realizadas</p>
-            </a>
+            <nav>
+                <button class="nav-item activo" data-seccion="inicio">
+                    <span>▦</span> Inicio
+                </button>
+                <button class="nav-item" data-seccion="productos">
+                    <span>⬡</span> Productos
+                </button>
+                <button class="nav-item" data-seccion="proveedores">
+                    <span>♧</span> Proveedores
+                </button>
+                <button class="nav-item" data-seccion="compras">
+                    <span>🛒</span> Compras
+                </button>
+                <button class="nav-item" data-seccion="ventas">
+                    <span>▣</span> Ventas
+                </button>
+                <button class="nav-item" data-seccion="gastos">
+                    <span>▤</span> Gastos
+                </button>
+                <button class="nav-item" data-seccion="informes">
+                    <span>▥</span> Informes
+                </button>
+            </nav>
+        </aside>
 
-            <a class="tarjeta" href="seccion.html?tipo=ventas">
-                <span class="icono">💰</span>
-                <h3>Ventas</h3>
-                <p>Consultar ventas realizadas</p>
-            </a>
+        <main class="contenido">
 
-            <a class="tarjeta" href="seccion.html?tipo=proveedores">
-                <span class="icono">🚚</span>
-                <h3>Proveedores</h3>
-                <p>Consultar proveedores</p>
-            </a>
+            <!-- INICIO -->
+            <section class="vista activa" id="vista-inicio">
+                <h2>Inicio</h2>
+                <p class="subtitulo">Resumen del almacén</p>
 
-            <a class="tarjeta" href="seccion.html?tipo=gastos">
-                <span class="icono">🧾</span>
-                <h3>Gastos</h3>
-                <p>Consultar gastos del almacén</p>
-            </a>
-        </section>
-    </main>
+                <div class="estadisticas">
+                    <article class="stat-card">
+                        <span class="stat-icono azul">⬡</span>
+                        <strong id="totalProductos">—</strong>
+                        <span>Productos</span>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-icono naranja">⚠</span>
+                        <strong id="totalStockBajo">—</strong>
+                        <span>Stock bajo</span>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-icono verde">$</span>
+                        <strong>—</strong>
+                        <span>Ventas del día</span>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-icono violeta">$</span>
+                        <strong>—</strong>
+                        <span>Gastos del mes</span>
+                    </article>
+                </div>
+
+                <div class="panel">
+                    <h3>Accesos rápidos</h3>
+
+                    <button class="acceso-rapido" data-seccion="productos">
+                        ⬡ Ver productos
+                    </button>
+
+                    <button class="acceso-rapido"
+                            data-seccion="productos"
+                            data-accion="nuevo">
+                        ＋ Registrar producto
+                    </button>
+
+                    <button class="acceso-rapido" data-seccion="compras">
+                        🛒 Consultar compras
+                    </button>
+
+                    <button class="acceso-rapido" data-seccion="ventas">
+                        ▣ Consultar ventas
+                    </button>
+                </div>
+            </section>
+
+            <!-- PRODUCTOS -->
+            <section class="vista" id="vista-productos">
+                <div class="titulo-seccion">
+                    <div>
+                        <h2>Productos</h2>
+                        <p class="subtitulo">Administración y control de stock</p>
+                    </div>
+
+                    <button type="button" class="boton-principal" onclick="mostrarFormularioProducto()">
+                        + Nuevo producto
+                    </button>
+                </div>
+
+                
+            <form id="formProducto" class="panel formulario oculto">
+                <h3>Registrar producto</h3>
+
+                <label for="codigoProducto">Código del producto</label>
+                <input
+                    id="codigoProducto"
+                    name="codigo"
+                    type="text"
+                    placeholder="PROD_0001"
+                    pattern="PROD_[0-9]{4,}"
+                    maxlength="13"
+                    required
+                >
+
+                <label for="nombreProducto">Nombre</label>
+                <input
+                    id="nombreProducto"
+                    name="nombre"
+                    type="text"
+                    placeholder="Ej. Arroz 1 kg"
+                    maxlength="150"
+                    required
+                >
+
+                <label for="precioProducto">Precio de venta</label>
+                <input
+                    id="precioProducto"
+                    name="precio"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="Ej. 1500"
+                    required
+                >
+
+                <label for="stockMinimo">Stock mínimo</label>
+                <input
+                    id="stockMinimo"
+                    name="stockMinimo"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="5"
+                    required
+                >
+
+                <p class="ayuda">
+                    Ingresá un código único con el formato PROD_0001.
+                    El stock inicial será cero.
+                </p>
+
+                <div class="acciones-formulario">
+                    <button class="boton-principal" type="submit">
+                        Guardar producto
+                    </button>
+
+                    <button class="boton-secundario" type="button"
+                            id="btnCancelarProducto">
+                        Cancelar
+                    </button>
+                </div>
+
+                <p id="mensajeFormulario" role="status"></p>
+            </form>
+
+
+                <div class="panel">
+                    <div class="titulo-seccion">
+                        <h3>Listado de productos</h3>
+                        <button class="boton-secundario" id="btnActualizarProductos">
+                            Actualizar
+                        </button>
+                    </div>
+
+                    <p id="mensajeProductos" class="mensaje" role="status">
+                        Cargando productos...
+                    </p>
+
+                    <div class="tabla-contenedor">
+                        <table id="tablaProductos">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th>Precio</th>
+                                    <th>Stock actual</th>
+                                    <th>Stock mínimo</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <details>
+                        <summary>Ver JSON recibido de la API</summary>
+                        <pre id="jsonProductos">[]</pre>
+                    </details>
+                </div>
+            </section>
+
+            <!-- SECCIONES GENERALES -->
+            <section class="vista" id="vista-proveedores">
+                <h2>Proveedores</h2>
+                <p class="subtitulo">Consulta de proveedores registrados</p>
+                <div class="panel">
+                    <button class="boton-secundario" data-actualizar="proveedores">
+                        Actualizar
+                    </button>
+                    <p class="mensaje" id="mensaje-proveedores"></p>
+                    <div class="tabla-contenedor">
+                        <table id="tabla-proveedores"></table>
+                    </div>
+                    <details>
+                        <summary>Ver JSON</summary>
+                        <pre id="json-proveedores">[]</pre>
+                    </details>
+                </div>
+            </section>
+
+            <section class="vista" id="vista-compras">
+                <h2>Compras</h2>
+                <p class="subtitulo">Historial de compras de mercadería</p>
+                <div class="panel">
+                    <button class="boton-secundario" data-actualizar="compras">
+                        Actualizar
+                    </button>
+                    <p class="mensaje" id="mensaje-compras"></p>
+                    <div class="tabla-contenedor">
+                        <table id="tabla-compras"></table>
+                    </div>
+                    <details>
+                        <summary>Ver JSON</summary>
+                        <pre id="json-compras">[]</pre>
+                    </details>
+                </div>
+            </section>
+
+            <section class="vista" id="vista-ventas">
+                <h2>Ventas</h2>
+                <p class="subtitulo">Historial de ventas registradas</p>
+                <div class="panel">
+                    <button class="boton-secundario" data-actualizar="ventas">
+                        Actualizar
+                    </button>
+                    <p class="mensaje" id="mensaje-ventas"></p>
+                    <div class="tabla-contenedor">
+                        <table id="tabla-ventas"></table>
+                    </div>
+                    <details>
+                        <summary>Ver JSON</summary>
+                        <pre id="json-ventas">[]</pre>
+                    </details>
+                </div>
+            </section>
+
+            <section class="vista" id="vista-gastos">
+                <h2>Gastos</h2>
+                <p class="subtitulo">Consulta de gastos operativos</p>
+                <div class="panel">
+                    <button class="boton-secundario" data-actualizar="gastos">
+                        Actualizar
+                    </button>
+                    <p class="mensaje" id="mensaje-gastos"></p>
+                    <div class="tabla-contenedor">
+                        <table id="tabla-gastos"></table>
+                    </div>
+                    <details>
+                        <summary>Ver JSON</summary>
+                        <pre id="json-gastos">[]</pre>
+                    </details>
+                </div>
+            </section>
+
+            <section class="vista" id="vista-informes">
+                <h2>Informes</h2>
+                <p class="subtitulo">Resumen de ingresos y gastos</p>
+                <div class="panel">
+                    <p>Esta sección queda preparada para incorporar los informes del almacén.</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
 </body>
 </html>
