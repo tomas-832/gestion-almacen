@@ -132,10 +132,6 @@ document.getElementById("formProducto").addEventListener(
                         "Los datos enviados no son válidos."
                     );
                 }
-
-                throw new Error(
-                    `No se pudo guardar el producto (HTTP ${respuesta.status}).`
-                );
             }
 
             mensaje.textContent = "Producto registrado correctamente.";
@@ -262,6 +258,61 @@ async function cargarProductos() {
             fila.appendChild(celdaEstado);
 
             cuerpo.appendChild(fila);
+
+            const celdaActivo = document.createElement("td");
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = producto.activo;
+            checkbox.setAttribute("aria-label", `Activar ${producto.nombre}`);
+
+            celdaActivo.appendChild(checkbox);
+            fila.appendChild(celdaActivo);
+
+            checkbox.addEventListener("change", async () => {
+    const nuevoEstado = checkbox.checked;
+
+    // Confirmar antes de desactivar
+    if (!nuevoEstado) {
+        const confirmar = confirm(
+            `¿Estás seguro de que querés desactivar "${producto.nombre}"?`
+        );
+
+        if (!confirmar) {
+            checkbox.checked = true;
+            return;
+        }
+    }
+
+    try {
+        const respuesta = await fetch(
+            `/productos/${producto.idProducto}/activo`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(nuevoEstado)
+            }
+        );
+
+        if (!respuesta.ok) {
+            throw new Error("No se pudo cambiar el estado del producto.");
+        }
+
+        alert(
+            nuevoEstado
+                ? "Producto activado correctamente."
+                : "Producto desactivado correctamente."
+        );
+
+    } catch (error) {
+        alert(error.message);
+
+        // Volver al estado anterior si falla la petición
+        checkbox.checked = !nuevoEstado;
+                }
+            });
         });
 
         mensaje.textContent =

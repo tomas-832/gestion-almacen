@@ -22,14 +22,16 @@ public class ProductoRepository {
 
         //Consulta SQL
         String consultaSql = """
-        SELECT codigo, nombre, precio_venta, stock_actual, stock_minimo, activo
-        FROM productos;
+        SELECT id_producto, codigo, nombre, precio_venta, stock_actual, stock_minimo, activo
+        FROM productos
+        ORDER BY activo DESC;
         """;
 
         //Arma los producto con el resultado de cada consulta
         return jdbcTemplate.query(consultaSql, (resultadoConsulta, numeroFila) -> {
             Producto producto = new Producto();
 
+            producto.setIdProducto(resultadoConsulta.getInt("id_producto"));
             producto.setCodigo(resultadoConsulta.getString("codigo"));
             producto.setNombre(resultadoConsulta.getString("nombre"));
             producto.setPrecioVenta(resultadoConsulta.getBigDecimal("precio_venta"));

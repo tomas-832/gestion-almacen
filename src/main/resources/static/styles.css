@@ -39,13 +39,19 @@ button {
 /* Encabezado */
 
 .topbar {
-    height: 74px;
-    background: var(--azul);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    padding: 0 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 22px;
-    gap: 20px;
+    background: #1b2d55;
+    color: #fff;
+    box-sizing: border-box;
+    z-index: 200;
 }
 
 .marca {
@@ -55,30 +61,30 @@ button {
 }
 
 .marca-icono {
-    font-size: 30px;
-    color: #9bcaff;
+    font-size: 26px;
 }
 
 .marca h1 {
-    font-size: 18px;
-    margin: 0 0 5px;
+    margin: 0;
+    font-size: 20px;
 }
 
 .marca p {
-    margin: 0;
-    color: #d5dff3;
+    margin: 4px 0 0;
+    font-size: 12px;
+    opacity: 0.85;
 }
 
 .estado-conexion {
-    color: #bfe8cb;
     font-size: 12px;
+    white-space: nowrap;
 }
 
 /* Barra lateral */
 
 .sidebar {
     position: fixed;
-    top: 74px;
+    top: 70px;
     bottom: 0;
     left: 0;
     width: 240px;
@@ -130,6 +136,7 @@ button {
 /* Contenido */
 
 .contenido {
+    margin-top: 74px;
     margin-left: 240px;
     padding: 22px;
     min-height: calc(100vh - 74px);

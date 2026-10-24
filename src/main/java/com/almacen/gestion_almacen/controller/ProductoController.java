@@ -50,7 +50,7 @@ public class ProductoController {
         }
     }
 
-    //
+    //Este metodo atiende las solicitudes PATCH (HTTP)
     @PatchMapping("/{id}/activo")
     public void cambiarEstadoProducto(@PathVariable int id, @RequestBody boolean activo){
 
